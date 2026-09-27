@@ -1,4 +1,3 @@
-```python
 import pandas as pd
 import streamlit as st
 
@@ -1833,4 +1832,3 @@ st.sidebar.caption(
 st.sidebar.caption(
     "BVU - Quản trị dịch vụ du lịch và lữ hành"
 )
-```
