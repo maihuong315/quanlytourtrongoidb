@@ -1438,8 +1438,7 @@ elif page == "🔑 Admin":
                     )
 
 
-        st.info(
-            "Đây là mật khẩu demo của bài tập."
+
         )
 
         st.stop()
