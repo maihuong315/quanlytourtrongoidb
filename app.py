@@ -39,11 +39,18 @@ DATABASE_URL = URL.create(
 
 @st.cache_resource
 def get_db_engine():
+    # Aiven MySQL can use TLS. PyMySQL accepts an SSL dictionary here.
+    # We keep the database credentials unchanged.
     return create_engine(
         DATABASE_URL,
         pool_pre_ping=True,
         pool_recycle=1800,
-        connect_args={"connect_timeout": 15},
+        connect_args={
+            "connect_timeout": 20,
+            "read_timeout": 30,
+            "write_timeout": 30,
+            "ssl": {"check_hostname": False},
+        },
     )
 
 # ============================================================
@@ -270,7 +277,17 @@ except Exception as e:
 
 if not db_connected:
     st.error("🔴 Không thể kết nối MySQL.")
+    st.warning(
+        "Nếu em đang chạy trên Streamlit Cloud, hãy kiểm tra lại Host/Port/User/Password "
+        "trong Aiven > Overview > Connection information. Aiven MySQL hỗ trợ kết nối "
+        "qua PyMySQL và có thể yêu cầu TLS."
+    )
     st.code(db_message)
+    st.info(
+        "Nếu lỗi có chữ 'Access denied' → thông tin đăng nhập/password không đúng. "
+        "Nếu có 'Can't connect'/'timed out' → host/port hoặc network. "
+        "Nếu có 'SSL'/'TLS' → cần cấu hình chứng chỉ/SSL của Aiven."
+    )
     st.stop()
 
 try:
