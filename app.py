@@ -23,7 +23,7 @@ st.set_page_config(
 
 DB = {
     "user": "avnadmin",
-    "password": "DAN_PASSWORD_AIVEN_CUA_EM",
+    "password": "DAN_MAT_KHAU_AIVEN_CUA_EM",
     "host": "mysql-19728385-npmaihuong-927f.b.aivencloud.com",
     "port": 27942,
     "database": "defaultdb"
@@ -200,14 +200,6 @@ def init_db():
 
         image_url TEXT,
 
-        itinerary TEXT,
-
-        included TEXT,
-
-        excluded TEXT,
-
-        notes TEXT,
-
         created_at DATETIME NOT NULL
 
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -291,55 +283,43 @@ except Exception as e:
 
 
 # ============================================================
-# 8. ĐẢM BẢO CÁC CỘT NỘI DUNG TOUR TỒN TẠI
+# 8. ĐẢM BẢO CỘT IMAGE_URL TỒN TẠI
 # ============================================================
 
 try:
 
     engine = get_db_engine()
 
-    tour_content_columns = {
-        "image_url": "TEXT",
-        "itinerary": "TEXT",
-        "included": "TEXT",
-        "excluded": "TEXT",
-        "notes": "TEXT"
-    }
-
     with engine.begin() as conn:
 
-        for column_name, column_type in tour_content_columns.items():
-
-            result = conn.execute(
-                text(
-                    """
-                    SELECT COUNT(*)
-                    FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_SCHEMA = DATABASE()
-                    AND TABLE_NAME = 'tours'
-                    AND COLUMN_NAME = :column_name
-                    """
-                ),
-                {
-                    "column_name": column_name
-                }
+        result = conn.execute(
+            text(
+                """
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME = 'tours'
+                AND COLUMN_NAME = 'image_url'
+                """
             )
+        )
 
-            exists = result.scalar()
+        exists = result.scalar()
 
-            if not exists:
 
-                conn.exec_driver_sql(
-                    f"""
-                    ALTER TABLE tours
-                    ADD COLUMN {column_name} {column_type}
-                    """
-                )
+        if not exists:
+
+            conn.exec_driver_sql(
+                """
+                ALTER TABLE tours
+                ADD COLUMN image_url TEXT
+                """
+            )
 
 except Exception as e:
 
     st.warning(
-        "⚠️ Không thể cập nhật các cột nội dung tour."
+        "⚠️ Không thể kiểm tra cột image_url."
     )
 
     st.code(str(e))
@@ -405,495 +385,7 @@ def execute_query(sql, params=None):
 
 
 # ============================================================
-# 11. THÊM 3 TOUR MẪU
-# ============================================================
-
-def add_sample_tours():
-
-    try:
-
-        engine = get_db_engine()
-
-        with engine.begin() as conn:
-
-            existing_tours = conn.execute(
-                text(
-                    """
-                    SELECT COUNT(*)
-                    FROM tours
-                    WHERE tour_name IN (
-                        'Vũng Tàu 2N1Đ - Biển xanh, núi đẹp',
-                        'Đà Lạt 3N2Đ - Thành phố ngàn hoa',
-                        'Phú Quốc 3N2Đ - Thiên đường đảo ngọc'
-                    )
-                    """
-                )
-            ).scalar()
-
-
-            if existing_tours > 0:
-
-                return
-
-
-            tours = [
-
-                # ==================================================
-                # TOUR 1 - VŨNG TÀU
-                # ==================================================
-
-                {
-                    "tour_name":
-                        "Vũng Tàu 2N1Đ - Biển xanh, núi đẹp",
-
-                    "destination":
-                        "Vũng Tàu",
-
-                    "departure_date":
-                        "2026-10-10",
-
-                    "return_date":
-                        "2026-10-11",
-
-                    "duration":
-                        2,
-
-                    "price":
-                        1890000,
-
-                    "max_people":
-                        30,
-
-                    "transport":
-                        "Xe du lịch",
-
-                    "hotel":
-                        "Khách sạn 3 sao",
-
-                    "meals":
-                        "3 bữa chính + 1 bữa sáng",
-
-                    "tour_guide":
-                        "Hướng dẫn viên chuyên nghiệp",
-
-                    "image_url":
-                        "",
-
-                    "description":
-                        """
-Tour Vũng Tàu 2 ngày 1 đêm mang đến hành trình
-nghỉ dưỡng kết hợp tham quan những điểm nổi bật
-của thành phố biển. Du khách có thời gian thư giãn,
-khám phá cảnh đẹp và thưởng thức đặc sản địa phương.
-""",
-
-                    "itinerary":
-                        """
-NGÀY 1: TP.HCM - VŨNG TÀU
-
-07:00 - Tập trung và khởi hành đi Vũng Tàu.
-
-09:30 - Tham quan khu vực Bãi Sau.
-
-11:30 - Dùng bữa trưa tại nhà hàng địa phương.
-
-13:30 - Nhận phòng khách sạn và nghỉ ngơi.
-
-15:30 - Tham quan Tượng Chúa Kitô Vua.
-
-17:30 - Tự do tắm biển, vui chơi và chụp ảnh.
-
-18:30 - Dùng bữa tối.
-
-20:00 - Tự do khám phá Vũng Tàu về đêm.
-
-
-NGÀY 2: VŨNG TÀU - TP.HCM
-
-06:30 - Dùng bữa sáng tại khách sạn.
-
-07:30 - Tham quan Mũi Nghinh Phong.
-
-09:30 - Tham quan và mua đặc sản địa phương.
-
-11:00 - Trả phòng.
-
-11:30 - Dùng bữa trưa.
-
-13:00 - Khởi hành về TP.HCM.
-
-15:30 - Kết thúc chương trình.
-""",
-
-                    "included":
-                        """
-- Xe du lịch đưa đón theo chương trình.
-- Khách sạn tiêu chuẩn 3 sao.
-- Các bữa ăn theo chương trình.
-- Vé tham quan các điểm có trong lịch trình.
-- Hướng dẫn viên.
-- Nước uống trên xe.
-- Bảo hiểm du lịch.
-""",
-
-                    "excluded":
-                        """
-- Chi phí cá nhân.
-- Đồ uống gọi thêm tại nhà hàng.
-- Các dịch vụ ngoài chương trình.
-- Tiền mua đặc sản và quà lưu niệm.
-- Chi phí phát sinh do yêu cầu riêng của khách.
-""",
-
-                    "notes":
-                        """
-- Có mặt đúng giờ tại điểm tập trung.
-- Mang theo CCCD hoặc giấy tờ tùy thân.
-- Chuẩn bị trang phục thoải mái, phù hợp tham quan biển.
-- Lịch trình có thể thay đổi tùy tình hình thực tế
-  nhưng vẫn đảm bảo các điểm chính.
-"""
-                },
-
-
-                # ==================================================
-                # TOUR 2 - ĐÀ LẠT
-                # ==================================================
-
-                {
-                    "tour_name":
-                        "Đà Lạt 3N2Đ - Thành phố ngàn hoa",
-
-                    "destination":
-                        "Đà Lạt",
-
-                    "departure_date":
-                        "2026-11-05",
-
-                    "return_date":
-                        "2026-11-07",
-
-                    "duration":
-                        3,
-
-                    "price":
-                        3290000,
-
-                    "max_people":
-                        30,
-
-                    "transport":
-                        "Xe du lịch",
-
-                    "hotel":
-                        "Khách sạn 3 sao",
-
-                    "meals":
-                        "5 bữa chính + 2 bữa sáng",
-
-                    "tour_guide":
-                        "Hướng dẫn viên",
-
-                    "image_url":
-                        "",
-
-                    "description":
-                        """
-Hành trình khám phá Đà Lạt với không khí mát mẻ,
-cảnh quan thơ mộng và những địa điểm tham quan
-nổi bật. Tour phù hợp cho nhóm bạn, gia đình và
-du khách yêu thích thiên nhiên.
-""",
-
-                    "itinerary":
-                        """
-NGÀY 1: TP.HCM - ĐÀ LẠT
-
-05:30 - Tập trung và khởi hành đi Đà Lạt.
-
-11:30 - Dùng bữa trưa.
-
-14:00 - Nhận phòng khách sạn.
-
-15:00 - Tham quan Quảng trường Lâm Viên.
-
-16:30 - Tham quan Hồ Xuân Hương.
-
-18:30 - Dùng bữa tối.
-
-19:30 - Tự do khám phá chợ đêm Đà Lạt.
-
-
-NGÀY 2: KHÁM PHÁ ĐÀ LẠT
-
-07:00 - Dùng bữa sáng.
-
-08:00 - Tham quan Thiền viện Trúc Lâm.
-
-10:00 - Tham quan khu vực hồ Tuyền Lâm.
-
-12:00 - Dùng bữa trưa.
-
-14:00 - Tham quan một điểm du lịch nổi bật.
-
-17:00 - Về khách sạn nghỉ ngơi.
-
-18:30 - Dùng bữa tối.
-
-20:00 - Tự do khám phá thành phố.
-
-
-NGÀY 3: ĐÀ LẠT - TP.HCM
-
-07:00 - Dùng bữa sáng.
-
-08:00 - Tham quan và mua đặc sản.
-
-10:30 - Trả phòng.
-
-11:00 - Dùng bữa trưa.
-
-12:30 - Khởi hành về TP.HCM.
-
-20:00 - Dự kiến kết thúc chương trình.
-""",
-
-                    "included":
-                        """
-- Xe du lịch theo chương trình.
-- Khách sạn 3 sao.
-- Các bữa ăn theo chương trình.
-- Vé tham quan.
-- Hướng dẫn viên.
-- Nước uống.
-- Bảo hiểm du lịch.
-""",
-
-                    "excluded":
-                        """
-- Chi phí cá nhân.
-- Đồ uống ngoài chương trình.
-- Vé các dịch vụ tự chọn.
-- Chi phí mua sắm cá nhân.
-- Các chi phí phát sinh ngoài chương trình.
-""",
-
-                    "notes":
-                        """
-- Đà Lạt có thời tiết thay đổi trong ngày,
-  nên mang theo áo khoác.
-- Mang giày dép thoải mái để thuận tiện di chuyển.
-- Bảo quản tư trang cá nhân trong quá trình tham quan.
-- Thời gian có thể điều chỉnh tùy tình hình
-  giao thông và thời tiết.
-"""
-                },
-
-
-                # ==================================================
-                # TOUR 3 - PHÚ QUỐC
-                # ==================================================
-
-                {
-                    "tour_name":
-                        "Phú Quốc 3N2Đ - Thiên đường đảo ngọc",
-
-                    "destination":
-                        "Phú Quốc",
-
-                    "departure_date":
-                        "2026-12-12",
-
-                    "return_date":
-                        "2026-12-14",
-
-                    "duration":
-                        3,
-
-                    "price":
-                        4590000,
-
-                    "max_people":
-                        30,
-
-                    "transport":
-                        "Máy bay + xe du lịch",
-
-                    "hotel":
-                        "Khách sạn 4 sao",
-
-                    "meals":
-                        "5 bữa chính + 2 bữa sáng",
-
-                    "tour_guide":
-                        "Hướng dẫn viên",
-
-                    "image_url":
-                        "",
-
-                    "description":
-                        """
-Tour Phú Quốc 3 ngày 2 đêm kết hợp nghỉ dưỡng
-và khám phá thiên nhiên biển đảo. Du khách có cơ hội
-tham quan các điểm nổi bật, thưởng thức hải sản
-và tận hưởng không gian nghỉ dưỡng.
-""",
-
-                    "itinerary":
-                        """
-NGÀY 1: ĐẾN PHÚ QUỐC - KHÁM PHÁ ĐẢO
-
-Buổi sáng - Đón khách tại sân bay.
-
-11:30 - Dùng bữa trưa.
-
-13:00 - Nhận phòng khách sạn.
-
-15:00 - Tham quan một số điểm nổi bật trên đảo.
-
-17:30 - Ngắm hoàng hôn.
-
-18:30 - Dùng bữa tối.
-
-20:00 - Tự do khám phá Phú Quốc về đêm.
-
-
-NGÀY 2: KHÁM PHÁ BIỂN ĐẢO
-
-07:00 - Dùng bữa sáng.
-
-08:00 - Khởi hành tham quan khu vực biển đảo.
-
-12:00 - Dùng bữa trưa.
-
-13:30 - Tiếp tục chương trình tham quan và vui chơi.
-
-17:00 - Trở về khách sạn.
-
-18:30 - Dùng bữa tối.
-
-20:00 - Tự do nghỉ ngơi.
-
-
-NGÀY 3: PHÚ QUỐC - KẾT THÚC
-
-07:00 - Dùng bữa sáng.
-
-08:00 - Tự do nghỉ ngơi hoặc mua đặc sản.
-
-10:30 - Trả phòng.
-
-11:00 - Dùng bữa trưa.
-
-12:30 - Di chuyển ra sân bay.
-
-Kết thúc chương trình.
-""",
-
-                    "included":
-                        """
-- Xe đưa đón tại Phú Quốc.
-- Khách sạn 4 sao.
-- Các bữa ăn theo chương trình.
-- Vé tham quan theo lịch trình.
-- Hướng dẫn viên.
-- Nước uống.
-- Bảo hiểm du lịch.
-""",
-
-                    "excluded":
-                        """
-- Vé máy bay nếu không nằm trong giá tour.
-- Chi phí cá nhân.
-- Đồ uống ngoài chương trình.
-- Các hoạt động vui chơi tự chọn.
-- Chi phí mua sắm.
-- Các chi phí phát sinh ngoài chương trình.
-""",
-
-                    "notes":
-                        """
-- Mang theo giấy tờ tùy thân.
-- Chuẩn bị đồ bơi, kem chống nắng
-  và trang phục phù hợp.
-- Tuân thủ hướng dẫn an toàn khi tham gia
-  các hoạt động trên biển.
-- Lịch trình có thể thay đổi tùy điều kiện thời tiết.
-"""
-                }
-            ]
-
-
-            for tour in tours:
-
-                conn.execute(
-                    text(
-                        """
-                        INSERT INTO tours
-                        (
-                            tour_name,
-                            destination,
-                            departure_date,
-                            return_date,
-                            duration,
-                            price,
-                            max_people,
-                            transport,
-                            hotel,
-                            meals,
-                            tour_guide,
-                            description,
-                            image_url,
-                            itinerary,
-                            included,
-                            excluded,
-                            notes,
-                            created_at
-                        )
-
-                        VALUES
-                        (
-                            :tour_name,
-                            :destination,
-                            :departure_date,
-                            :return_date,
-                            :duration,
-                            :price,
-                            :max_people,
-                            :transport,
-                            :hotel,
-                            :meals,
-                            :tour_guide,
-                            :description,
-                            :image_url,
-                            :itinerary,
-                            :included,
-                            :excluded,
-                            :notes,
-                            :created_at
-                        )
-                        """
-                    ),
-                    {
-                        **tour,
-                        "created_at": datetime.now()
-                    }
-                )
-
-    except Exception as e:
-
-        st.warning(
-            "⚠️ Không thể thêm tour mẫu."
-        )
-
-        st.code(str(e))
-
-
-add_sample_tours()
-
-
-# ============================================================
-# 12. LỊCH SỬ BOOKING
+# 11. LỊCH SỬ BOOKING
 # ============================================================
 
 def load_booking_history():
@@ -934,7 +426,7 @@ def load_booking_history():
 
 
 # ============================================================
-# 13. SESSION STATE
+# 12. SESSION STATE
 # ============================================================
 
 if "admin_logged_in" not in st.session_state:
@@ -943,7 +435,7 @@ if "admin_logged_in" not in st.session_state:
 
 
 # ============================================================
-# 14. SIDEBAR
+# 13. SIDEBAR
 # ============================================================
 
 st.sidebar.title(
@@ -968,7 +460,7 @@ page = st.sidebar.radio(
 
 
 # ============================================================
-# 15. TRANG TỔNG QUAN
+# 14. TRANG TỔNG QUAN
 # ============================================================
 
 if page == "🏠 Tổng quan":
@@ -1100,6 +592,10 @@ if page == "🏠 Tổng quan":
                 )
 
 
+                # ------------------------------------------------
+                # ẢNH TOUR
+                # ------------------------------------------------
+
                 image_url = tour.get(
                     "image_url"
                 )
@@ -1129,6 +625,10 @@ if page == "🏠 Tổng quan":
                         "🖼️ Tour chưa có ảnh."
                     )
 
+
+                # ------------------------------------------------
+                # TÊN TOUR
+                # ------------------------------------------------
 
                 st.markdown(
                     f"### 🚌 {tour['tour_name']}"
@@ -1198,63 +698,6 @@ if page == "🏠 Tổng quan":
                     )
 
 
-                # Xem nội dung tour
-                with st.expander(
-                    "📖 Xem chương trình tour"
-                ):
-
-                    if pd.notna(
-                        tour.get("itinerary")
-                    ):
-
-                        st.markdown(
-                            "### 🗓️ Lịch trình"
-                        )
-
-                        st.text(
-                            str(tour["itinerary"])
-                        )
-
-
-                    if pd.notna(
-                        tour.get("included")
-                    ):
-
-                        st.markdown(
-                            "### ✅ Dịch vụ bao gồm"
-                        )
-
-                        st.text(
-                            str(tour["included"])
-                        )
-
-
-                    if pd.notna(
-                        tour.get("excluded")
-                    ):
-
-                        st.markdown(
-                            "### ❌ Dịch vụ không bao gồm"
-                        )
-
-                        st.text(
-                            str(tour["excluded"])
-                        )
-
-
-                    if pd.notna(
-                        tour.get("notes")
-                    ):
-
-                        st.markdown(
-                            "### 📌 Lưu ý"
-                        )
-
-                        st.text(
-                            str(tour["notes"])
-                        )
-
-
                 st.markdown(
                     '</div>',
                     unsafe_allow_html=True
@@ -1312,7 +755,7 @@ if page == "🏠 Tổng quan":
 
 
 # ============================================================
-# 16. QUẢN LÝ TOUR
+# 15. QUẢN LÝ TOUR
 # ============================================================
 
 elif page == "🚌 Quản lý Tour":
@@ -1437,77 +880,9 @@ elif page == "🚌 Quản lý Tour":
                 )
 
 
-            # =================================================
-            # NỘI DUNG TOUR
-            # =================================================
-
-            st.markdown("---")
-
-            st.subheader(
-                "📝 NỘI DUNG CHI TIẾT TOUR"
-            )
-
-
             description = st.text_area(
-                "📖 Giới thiệu tour",
-                placeholder=(
-                    "Giới thiệu tổng quan về tour, "
-                    "điểm nổi bật, đối tượng phù hợp..."
-                ),
-                height=120
-            )
-
-
-            itinerary = st.text_area(
-                "🗓️ Lịch trình chi tiết",
-                placeholder="""NGÀY 1:
-07:00 - Tập trung.
-08:00 - Khởi hành.
-12:00 - Dùng bữa trưa.
-14:00 - Nhận phòng.
-15:00 - Tham quan.
-
-NGÀY 2:
-07:00 - Ăn sáng.
-08:00 - Tham quan.
-12:00 - Ăn trưa.
-14:00 - Tiếp tục chương trình.
-17:00 - Kết thúc.""",
-                height=250
-            )
-
-
-            included = st.text_area(
-                "✅ Dịch vụ bao gồm",
-                placeholder="""- Xe du lịch.
-- Khách sạn.
-- Các bữa ăn theo chương trình.
-- Vé tham quan.
-- Hướng dẫn viên.
-- Nước uống.
-- Bảo hiểm du lịch.""",
-                height=160
-            )
-
-
-            excluded = st.text_area(
-                "❌ Dịch vụ không bao gồm",
-                placeholder="""- Chi phí cá nhân.
-- Đồ uống ngoài chương trình.
-- Chi phí mua sắm.
-- Dịch vụ tự chọn.
-- Chi phí phát sinh ngoài chương trình.""",
-                height=130
-            )
-
-
-            notes = st.text_area(
-                "📌 Lưu ý",
-                placeholder="""- Mang theo CCCD/giấy tờ tùy thân.
-- Có mặt đúng giờ.
-- Chuẩn bị trang phục phù hợp.
-- Lịch trình có thể thay đổi tùy tình hình thực tế.""",
-                height=130
+                "📝 Nội dung / lịch trình tour",
+                placeholder="Mô tả lịch trình và dịch vụ..."
             )
 
 
@@ -1564,10 +939,6 @@ NGÀY 2:
                             tour_guide,
                             description,
                             image_url,
-                            itinerary,
-                            included,
-                            excluded,
-                            notes,
                             created_at
                         )
 
@@ -1586,10 +957,6 @@ NGÀY 2:
                             :tour_guide,
                             :description,
                             :image_url,
-                            :itinerary,
-                            :included,
-                            :excluded,
-                            :notes,
                             :created_at
                         )
                         """,
@@ -1607,10 +974,6 @@ NGÀY 2:
                             "tour_guide": tour_guide,
                             "description": description.strip(),
                             "image_url": image_url.strip(),
-                            "itinerary": itinerary.strip(),
-                            "included": included.strip(),
-                            "excluded": excluded.strip(),
-                            "notes": notes.strip(),
                             "created_at": datetime.now()
                         }
                     )
@@ -1652,11 +1015,7 @@ NGÀY 2:
                 meals,
                 tour_guide,
                 image_url,
-                description,
-                itinerary,
-                included,
-                excluded,
-                notes
+                description
             FROM tours
             ORDER BY departure_date ASC
             """
@@ -1753,8 +1112,8 @@ NGÀY 2:
                         tour.get("description")
                     ):
 
-                        st.markdown(
-                            "### 📖 Giới thiệu tour"
+                        st.write(
+                            "📝 **Mô tả:**"
                         )
 
                         st.write(
@@ -1762,60 +1121,8 @@ NGÀY 2:
                         )
 
 
-                    if pd.notna(
-                        tour.get("itinerary")
-                    ):
-
-                        st.markdown(
-                            "### 🗓️ Lịch trình chi tiết"
-                        )
-
-                        st.text(
-                            str(tour["itinerary"])
-                        )
-
-
-                    if pd.notna(
-                        tour.get("included")
-                    ):
-
-                        st.markdown(
-                            "### ✅ Dịch vụ bao gồm"
-                        )
-
-                        st.text(
-                            str(tour["included"])
-                        )
-
-
-                    if pd.notna(
-                        tour.get("excluded")
-                    ):
-
-                        st.markdown(
-                            "### ❌ Dịch vụ không bao gồm"
-                        )
-
-                        st.text(
-                            str(tour["excluded"])
-                        )
-
-
-                    if pd.notna(
-                        tour.get("notes")
-                    ):
-
-                        st.markdown(
-                            "### 📌 Lưu ý"
-                        )
-
-                        st.text(
-                            str(tour["notes"])
-                        )
-
-
 # ============================================================
-# 17. KHÁCH HÀNG
+# 16. KHÁCH HÀNG
 # ============================================================
 
 elif page == "👤 Khách hàng":
@@ -1832,6 +1139,10 @@ elif page == "👤 Khách hàng":
         ]
     )
 
+
+    # ========================================================
+    # THÊM KHÁCH HÀNG
+    # ========================================================
 
     with tab1:
 
@@ -1922,6 +1233,10 @@ elif page == "👤 Khách hàng":
                         st.rerun()
 
 
+    # ========================================================
+    # DANH SÁCH KHÁCH
+    # ========================================================
+
     with tab2:
 
         df_customers = read_query(
@@ -1968,7 +1283,7 @@ elif page == "👤 Khách hàng":
 
 
 # ============================================================
-# 18. ĐẶT TOUR
+# 17. ĐẶT TOUR
 # ============================================================
 
 elif page == "📋 Đặt Tour":
@@ -2000,12 +1315,7 @@ elif page == "📋 Đặt Tour":
             duration,
             price,
             max_people,
-            image_url,
-            description,
-            itinerary,
-            included,
-            excluded,
-            notes
+            image_url
         FROM tours
         WHERE departure_date >= CURRENT_DATE
         ORDER BY departure_date
@@ -2151,85 +1461,6 @@ elif page == "📋 Đặt Tour":
             )
 
 
-        # ====================================================
-        # NỘI DUNG TOUR CHO KHÁCH XEM
-        # ====================================================
-
-        st.markdown("---")
-
-        st.subheader(
-            "📖 CHƯƠNG TRÌNH TOUR"
-        )
-
-
-        if pd.notna(
-            tour.get("description")
-        ):
-
-            st.markdown(
-                "### 📖 Giới thiệu"
-            )
-
-            st.write(
-                tour["description"]
-            )
-
-
-        if pd.notna(
-            tour.get("itinerary")
-        ):
-
-            st.markdown(
-                "### 🗓️ Lịch trình"
-            )
-
-            st.text(
-                str(tour["itinerary"])
-            )
-
-
-        if pd.notna(
-            tour.get("included")
-        ):
-
-            st.markdown(
-                "### ✅ Dịch vụ bao gồm"
-            )
-
-            st.text(
-                str(tour["included"])
-            )
-
-
-        if pd.notna(
-            tour.get("excluded")
-        ):
-
-            st.markdown(
-                "### ❌ Dịch vụ không bao gồm"
-            )
-
-            st.text(
-                str(tour["excluded"])
-            )
-
-
-        if pd.notna(
-            tour.get("notes")
-        ):
-
-            st.markdown(
-                "### 📌 Lưu ý"
-            )
-
-            st.text(
-                str(tour["notes"])
-            )
-
-
-        st.markdown("---")
-
-
         # ----------------------------------------------------
         # KIỂM TRA SỐ CHỖ
         # ----------------------------------------------------
@@ -2366,7 +1597,7 @@ elif page == "📋 Đặt Tour":
 
 
 # ============================================================
-# 19. HÓA ĐƠN
+# 18. HÓA ĐƠN
 # ============================================================
 
 elif page == "🧾 Hóa đơn":
@@ -2515,7 +1746,7 @@ elif page == "🧾 Hóa đơn":
 
 
 # ============================================================
-# 20. ADMIN
+# 19. ADMIN
 # ============================================================
 
 elif page == "🔑 Admin":
@@ -2630,12 +1861,7 @@ elif page == "🔑 Admin":
                 hotel,
                 meals,
                 tour_guide,
-                image_url,
-                description,
-                itinerary,
-                included,
-                excluded,
-                notes
+                image_url
             FROM tours
             ORDER BY departure_date
             """
@@ -2650,22 +1876,7 @@ elif page == "🔑 Admin":
 
         else:
 
-            display = df_tours[
-                [
-                    "id",
-                    "tour_name",
-                    "destination",
-                    "departure_date",
-                    "return_date",
-                    "duration",
-                    "price",
-                    "max_people",
-                    "transport",
-                    "hotel",
-                    "meals",
-                    "tour_guide"
-                ]
-            ].copy()
+            display = df_tours.copy()
 
 
             display.columns = [
@@ -2680,7 +1891,8 @@ elif page == "🔑 Admin":
                 "Phương tiện",
                 "Khách sạn",
                 "Ăn uống",
-                "HDV"
+                "HDV",
+                "Ảnh"
             ]
 
 
@@ -2689,84 +1901,6 @@ elif page == "🔑 Admin":
                 use_container_width=True,
                 hide_index=True
             )
-
-
-            st.markdown("---")
-
-            st.subheader(
-                "📖 Xem nội dung chương trình"
-            )
-
-
-            for _, tour in df_tours.iterrows():
-
-                with st.expander(
-                    f"🚌 {tour['tour_name']}"
-                ):
-
-                    if pd.notna(
-                        tour.get("description")
-                    ):
-
-                        st.markdown(
-                            "### 📖 Giới thiệu"
-                        )
-
-                        st.write(
-                            tour["description"]
-                        )
-
-
-                    if pd.notna(
-                        tour.get("itinerary")
-                    ):
-
-                        st.markdown(
-                            "### 🗓️ Lịch trình"
-                        )
-
-                        st.text(
-                            str(tour["itinerary"])
-                        )
-
-
-                    if pd.notna(
-                        tour.get("included")
-                    ):
-
-                        st.markdown(
-                            "### ✅ Bao gồm"
-                        )
-
-                        st.text(
-                            str(tour["included"])
-                        )
-
-
-                    if pd.notna(
-                        tour.get("excluded")
-                    ):
-
-                        st.markdown(
-                            "### ❌ Không bao gồm"
-                        )
-
-                        st.text(
-                            str(tour["excluded"])
-                        )
-
-
-                    if pd.notna(
-                        tour.get("notes")
-                    ):
-
-                        st.markdown(
-                            "### 📌 Lưu ý"
-                        )
-
-                        st.text(
-                            str(tour["notes"])
-                        )
 
 
     # ========================================================
@@ -2841,6 +1975,10 @@ elif page == "🔑 Admin":
 
             st.markdown("---")
 
+
+            # ------------------------------------------------
+            # DOANH THU THEO NGÀY
+            # ------------------------------------------------
 
             st.subheader(
                 "📅 Doanh thu theo ngày"
@@ -3036,7 +2174,7 @@ elif page == "🔑 Admin":
 
 
 # ============================================================
-# 21. FOOTER
+# 20. FOOTER
 # ============================================================
 
 st.sidebar.markdown("---")
