@@ -23,9 +23,9 @@ st.set_page_config(
 
 DB = {
     "user": "avnadmin",
-    "password": "DAN_MAT_KHAU_AIVEN_CUA_EM",
-    "host": "mysql-19728385-npmaihuong-927f.b.aivencloud.com",
-    "port": 27942,
+    "password": "AVNS_Nw9hpExdXLNfNRO9HAg",
+    "host": "mysql-22c0bd8e-binhduongnguyen317-6abb.c.aivencloud.com",
+    "port": 24608,
     "database": "defaultdb"
 }
 
